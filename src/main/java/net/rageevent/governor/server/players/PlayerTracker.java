@@ -157,7 +157,7 @@ public final class PlayerTracker {
             return done(TransferResult.Status.NOT_ONLINE, null, "Player is not online");
         }
         Optional<ConnectedServer> best = joinable(group).stream()
-                .filter(server -> !server.name().equals(player.server()))
+                .filter(server -> !server.name().equals(player.server()) && server.modeType() == null) //Basically stops the server from sending you to an actual gameserver.
                 .min(Comparator.comparingInt(server -> load(server.name())));
         if (best.isPresent()) return transfer(uuid, best.get().name());
 
