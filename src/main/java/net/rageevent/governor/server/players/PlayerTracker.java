@@ -7,6 +7,7 @@ import net.rageevent.governor.api.shipments.network.player.TransferPlayerRequest
 import net.rageevent.governor.api.shipments.network.player.TransferResult;
 import net.rageevent.governor.server.ConnectedServer;
 import net.rageevent.governor.server.ServerConnectionManager;
+import net.rageevent.myriad.server.ServerModeType;
 import net.rageevent.myriad.server.ServerType;
 
 import java.time.Duration;
@@ -103,6 +104,12 @@ public final class PlayerTracker {
      */
     public List<ConnectedServer> joinable(ServerType group) {
         return servers.inGroup(group).stream()
+                .filter(server -> server.state().joinable() && freeSlots(server) > 0)
+                .toList();
+    }
+
+    public List<ConnectedServer> joinable(ServerModeType group) {
+        return servers.inMode(group).stream()
                 .filter(server -> server.state().joinable() && freeSlots(server) > 0)
                 .toList();
     }

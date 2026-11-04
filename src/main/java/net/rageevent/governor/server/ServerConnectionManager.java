@@ -4,6 +4,7 @@ import net.rageevent.governor.api.Envelope;
 import net.rageevent.governor.api.EnvelopeConnection;
 import net.rageevent.governor.api.Transaction;
 import net.rageevent.governor.api.server.ServerProfile;
+import net.rageevent.myriad.server.ServerModeType;
 import net.rageevent.myriad.server.ServerType;
 
 import java.util.*;
@@ -35,10 +36,15 @@ public class ServerConnectionManager {
     public List<ConnectedServer> gameServers() {
         return servers.values().stream().filter(ConnectedServer::isGameServer).toList();
     }
-    
+
     public List<ConnectedServer> inGroup(ServerType group) {
         return servers.values().stream().filter(server -> server.isGameServer() && server.serverType() == group).toList();
     }
+
+    public List<ConnectedServer> inMode(ServerModeType group) {
+        return servers.values().stream().filter(server -> server.isGameServer() && server.serverType() == group.type() && server.modeType() == group).toList();
+    }
+
     public Set<String> names() {
         return Set.copyOf(servers.keySet());
     }

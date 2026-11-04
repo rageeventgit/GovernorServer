@@ -10,7 +10,8 @@ import net.rageevent.governor.server.NetworkServer;
 import net.rageevent.governor.server.ServerConnectionManager;
 import net.rageevent.governor.server.players.OnlinePlayer;
 import net.rageevent.governor.server.players.PlayerTracker;
-import net.rageevent.myriad.server.ServerType;
+import net.rageevent.myriad.server.ServerModeType;
+import net.rageevent.myriad.server.ServerModeType;
 
 import java.time.Duration;
 import java.util.*;
@@ -26,8 +27,8 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
 
     private final ServerConnectionManager servers;
     private final PlayerTracker players;
-    private final Map<ServerType, Deque<UUID>> queues = new HashMap<>();
-    private final Map<UUID, ServerType> queueOf = new HashMap<>();
+    private final Map<ServerModeType, Deque<UUID>> queues = new HashMap<>();
+    private final Map<UUID, ServerModeType> queueOf = new HashMap<>();
     private final Map<UUID, Integer> lastAnnounced = new HashMap<>();
     private final Map<String, Long> cooldownUntil = new HashMap<>();
     private final ScheduledExecutorService ticker;
@@ -61,9 +62,9 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
 
     private QueueResult join(EnvelopeConnection origin, JoinQueueRequest request) {
         UUID player = request.player();
-        ServerType queue = request.queue();
+        ServerModeType queue = request.queue();
         if (!players.isOnline(player)) return new QueueResult(QueueResult.Status.NOT_ONLINE, queue, 0, 0);
-        if (servers.inGroup(queue).isEmpty()) return new QueueResult(QueueResult.Status.UNKNOWN_QUEUE, queue, 0, 0);
+        if (servers.inMode(queue).isEmpty()) return new QueueResult(QueueResult.Status.UNKNOWN_QUEUE, queue, 0, 0);
 
         QueueResult result;
         synchronized (this) {
@@ -83,7 +84,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
     }
 
     private synchronized QueueResult leave(UUID player) {
-        ServerType queue = queueOf.get(player);
+        ServerModeType queue = queueOf.get(player);
         if (queue == null) return new QueueResult(QueueResult.Status.NOT_QUEUED, null, 0, 0);
         removeFromQueue(player);
         return new QueueResult(QueueResult.Status.LEFT, queue, 0, queues.getOrDefault(queue, new ArrayDeque<>()).size());
@@ -93,7 +94,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
         try {
             List<Runnable> dispatches = new ArrayList<>();
             synchronized (this) {
-                for (Map.Entry<ServerType, Deque<UUID>> entry : queues.entrySet()) {
+                for (Map.Entry<ServerModeType, Deque<UUID>> entry : queues.entrySet()) {
                     match(entry.getKey(), entry.getValue(), dispatches);
                 }
                 queues.values().removeIf(Deque::isEmpty);
@@ -105,7 +106,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
         }
     }
 
-    private void match(ServerType queue, Deque<UUID> line, List<Runnable> dispatches) {
+    private void match(ServerModeType queue, Deque<UUID> line, List<Runnable> dispatches) {
         if (line.isEmpty()) return;
         long now = System.nanoTime();
         cooldownUntil.values().removeIf(until -> now - until > 0);
@@ -125,7 +126,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
         }
     }
 
-    private void send(UUID player, ServerType queue, String server) {
+    private void send(UUID player, ServerModeType queue, String server) {
         players.notify(new QueueMatched(player, queue, server));
         players.transfer(player, server).thenAccept(result -> {
             if (result.status() == TransferResult.Status.SUCCESS || result.status() == TransferResult.Status.ALREADY_CONNECTED)
@@ -137,7 +138,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
         });
     }
 
-    private synchronized void requeueAtFront(UUID player, ServerType queue, String failedServer) {
+    private synchronized void requeueAtFront(UUID player, ServerModeType queue, String failedServer) {
         cooldownUntil.put(failedServer, System.nanoTime() + FAILURE_COOLDOWN.toNanos());
         if (queueOf.containsKey(player) || !players.isOnline(player)) return;
         queues.computeIfAbsent(queue, name -> new ArrayDeque<>()).addFirst(player);
@@ -158,7 +159,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
     }
 
     private void removeFromQueue(UUID player) {
-        ServerType queue = queueOf.remove(player);
+        ServerModeType queue = queueOf.remove(player);
         lastAnnounced.remove(player);
         if (queue == null) return;
         Deque<UUID> line = queues.get(queue);
@@ -173,6 +174,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
         }
         return 0;
     }
+
     @Override
     public synchronized void onLeave(OnlinePlayer player) {
         removeFromQueue(player.uuid());

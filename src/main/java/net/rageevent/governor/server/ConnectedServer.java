@@ -7,6 +7,7 @@ import net.rageevent.governor.api.server.ServerProfile;
 import net.rageevent.governor.api.server.ServerRole;
 import net.rageevent.governor.api.server.ServerState;
 import net.rageevent.governor.api.shipments.network.server.RegisterGameServer;
+import net.rageevent.myriad.server.ServerModeType;
 import net.rageevent.myriad.server.ServerType;
 
 import java.net.SocketAddress;
@@ -46,7 +47,9 @@ public final class ConnectedServer implements EnvelopeConnection {
     public ServerType serverType() {
         return profile.serverType();
     }
-
+    public ServerModeType modeType(){
+        return profile.modeType();
+    }
     public ServerProfile profile() {
         return profile;
     }
