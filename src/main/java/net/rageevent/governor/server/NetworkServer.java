@@ -58,7 +58,7 @@ public final class NetworkServer implements AutoCloseable {
     private boolean stopped;
 
     public NetworkServer(int port) {
-        this("overseer", port, EnvelopeRegistry.standard());
+        this("Governor", port, EnvelopeRegistry.standard());
     }
 
     /**

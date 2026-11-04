@@ -131,7 +131,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
             if (result.status() == TransferResult.Status.SUCCESS || result.status() == TransferResult.Status.ALREADY_CONNECTED)
                 return;
             if (result.status() == TransferResult.Status.NOT_ONLINE) return;
-            LOG.log(System.Logger.Level.INFO, "Sending $player to $server failed (${result.status()}: ${result.detail()()}); " +
+            LOG.log(System.Logger.Level.INFO, "Sending $player to $server failed (${result.status()}: ${result.detail()}); " +
                     "back to the front of $queue, $server skipped for ${FAILURE_COOLDOWN.toSeconds()} s");
             requeueAtFront(player, queue, server);
         });

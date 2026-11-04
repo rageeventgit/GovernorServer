@@ -31,6 +31,19 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>net.rageevent.governor.server.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.16.0</version>
                 <configuration>
@@ -71,7 +84,6 @@
             <version>2.22.3</version>
         </dependency>
 
-
         <dependency>
             <groupId>net.rageevent</groupId>
             <artifactId>myriad-common</artifactId>
@@ -82,7 +94,6 @@
             <artifactId>GovernorAPI</artifactId>
             <version>1.0.0</version>
         </dependency>
-
 
         <dependency>
             <groupId>dev.lotus</groupId>

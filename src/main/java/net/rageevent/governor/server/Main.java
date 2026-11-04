@@ -18,17 +18,24 @@ public class Main {
         int port = DEFAULT_PORT;
 
         for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("--port")) port = Integer.parseInt(args[i + 1]);
+            if (args[i].equals("--port"))
+                port = Integer.parseInt(args[i + 1]);
         }
 
         NetworkServer hub = new NetworkServer(port);
-        hub.install(new SystemModule()).install(new QueueModule(hub)).start();
+        hub.install(new SystemModule())
+                .install(new QueueModule(hub))
+                .start();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> readTerminalInput(hub), "Overseer-Shutdown"));
+        Thread shutdownCommand = new Thread(() -> {
+            readTerminalInput(hub);
+        });
+        shutdownCommand.start();
+        Runtime.getRuntime().addShutdownHook(new Thread(hub::shutdown, "Governor-Shutdown"));
         hub.awaitTermination();
     }
 
-    private static void readTerminalInput(NetworkServer hub){
+    private static void readTerminalInput(NetworkServer hub) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         System.out.println("Terminal ready. Type 'shutdown' and press Enter to stop.");
 
