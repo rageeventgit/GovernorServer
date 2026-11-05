@@ -72,7 +72,8 @@ public final class NetworkServer implements AutoCloseable {
         this.registry = Objects.requireNonNull(registry, "registry");
 
         NetworkModule network = new NetworkModule(connections, players);
-        install(network).addListener(network);
+        install(network);
+        addListener(network);
     }
 
     public NetworkServer install(EnvelopeCarrier module) {

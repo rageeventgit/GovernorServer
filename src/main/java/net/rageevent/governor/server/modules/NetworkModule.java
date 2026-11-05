@@ -34,8 +34,7 @@ public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
                         fromProxy(connection, event).ifPresent(proxy -> players.switchServer(proxy, event.player(), event.server())))
                 .on(PlayerLeftNetwork.class, (connection, event) ->
                         fromProxy(connection, event).ifPresent(proxy -> players.leave(proxy, event.player())))
-                .on(ProxyRoster.class, (connection, roster) ->
-                        fromProxy(connection, roster).ifPresent(proxy -> players.replaceRoster(proxy, roster.players())))
+                .on(ProxyRoster.class, (connection, roster) -> fromProxy(connection, roster).ifPresent(proxy -> players.replaceRoster(proxy, roster.players())))
                 .onAsyncTransaction(SendToServerRequest.class, (_, request) -> players.transfer(request.player(), request.server()))
                 .onAsyncTransaction(SendToGroupRequest.class, (_, request) -> players.sendToGroup(request.player(), request.group()))
                 .onTransaction(FindPlayerRequest.class, (_, request) -> find(request.name()));
@@ -77,7 +76,6 @@ public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
                 servers.broadcastToProxies(new RemoveGameServer(server.name()));
             else
                 players.proxyLost(server.name());
-
         });
     }
 
