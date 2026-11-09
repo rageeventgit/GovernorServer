@@ -7,8 +7,8 @@ import net.rageevent.governor.api.server.ServerProfile;
 import net.rageevent.governor.api.server.ServerRole;
 import net.rageevent.governor.api.server.ServerState;
 import net.rageevent.governor.api.shipments.network.server.RegisterGameServer;
-import net.rageevent.myriad.server.ServerModeType;
-import net.rageevent.myriad.server.ServerType;
+import net.rageevent.myriad.api.server.ServerModeType;
+import net.rageevent.myriad.api.server.ServerType;
 
 import java.net.SocketAddress;
 import java.time.Duration;

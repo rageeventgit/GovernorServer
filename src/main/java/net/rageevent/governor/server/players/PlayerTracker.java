@@ -7,8 +7,8 @@ import net.rageevent.governor.api.shipments.network.player.TransferPlayerRequest
 import net.rageevent.governor.api.shipments.network.player.TransferResult;
 import net.rageevent.governor.server.ConnectedServer;
 import net.rageevent.governor.server.ServerConnectionManager;
-import net.rageevent.myriad.server.ServerModeType;
-import net.rageevent.myriad.server.ServerType;
+import net.rageevent.myriad.api.server.ServerModeType;
+import net.rageevent.myriad.api.server.ServerType;
 
 import java.time.Duration;
 import java.util.*;

@@ -4,8 +4,8 @@ import net.rageevent.governor.api.Envelope;
 import net.rageevent.governor.api.EnvelopeConnection;
 import net.rageevent.governor.api.Transaction;
 import net.rageevent.governor.api.server.ServerProfile;
-import net.rageevent.myriad.server.ServerModeType;
-import net.rageevent.myriad.server.ServerType;
+import net.rageevent.myriad.api.server.ServerModeType;
+import net.rageevent.myriad.api.server.ServerType;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;

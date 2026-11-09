@@ -10,8 +10,7 @@ import net.rageevent.governor.server.NetworkServer;
 import net.rageevent.governor.server.ServerConnectionManager;
 import net.rageevent.governor.server.players.OnlinePlayer;
 import net.rageevent.governor.server.players.PlayerTracker;
-import net.rageevent.myriad.server.ServerModeType;
-import net.rageevent.myriad.server.ServerModeType;
+import net.rageevent.myriad.api.server.ServerModeType;
 
 import java.time.Duration;
 import java.util.*;

@@ -72,6 +72,13 @@
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>fern-releases</id>
+            <url>https://fern.rageevent.net/maven/releases</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>io.netty</groupId>
@@ -87,14 +94,13 @@
         <dependency>
             <groupId>net.rageevent</groupId>
             <artifactId>myriad-common</artifactId>
-            <version>0.0.2</version>
+            <version>0.0.3</version>
         </dependency>
         <dependency>
             <groupId>net.rageevent.governor</groupId>
             <artifactId>GovernorAPI</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
-
         <dependency>
             <groupId>dev.lotus</groupId>
             <artifactId>lotus-annotations</artifactId>
