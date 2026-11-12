@@ -7,6 +7,7 @@ import net.rageevent.governor.api.EnvelopeCarrier;
 import net.rageevent.governor.api.EnvelopeConnection;
 import net.rageevent.governor.api.protocol.ConnectionListener;
 import net.rageevent.governor.api.shipments.network.player.*;
+import net.rageevent.governor.api.shipments.network.player.data.PullUserData;
 import net.rageevent.governor.api.shipments.network.server.*;
 import net.rageevent.governor.server.ConnectedServer;
 import net.rageevent.governor.server.ServerConnectionManager;
@@ -35,9 +36,11 @@ public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
                 .on(PlayerLeftNetwork.class, (connection, event) ->
                         fromProxy(connection, event).ifPresent(proxy -> players.leave(proxy, event.player())))
                 .on(ProxyRoster.class, (connection, roster) -> fromProxy(connection, roster).ifPresent(proxy -> players.replaceRoster(proxy, roster.players())))
+                .on(SupplyGameProfile.class, (_, gameProfile) -> servers.get(gameProfile.name()).ifPresent(server -> server.gameData(gameProfile.metaData())))
                 .onAsyncTransaction(SendToServerRequest.class, (_, request) -> players.transfer(request.player(), request.server()))
                 .onAsyncTransaction(SendToGroupRequest.class, (_, request) -> players.sendToGroup(request.player(), request.group()))
-                .onTransaction(FindPlayerRequest.class, (_, request) -> find(request.name()));
+                .onTransaction(FindPlayerRequest.class, (_, request) -> find(request.name()))
+        ;
     }
 
     private FindPlayerResult find(String name) {
@@ -57,6 +60,14 @@ public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
             LOG.log(System.Logger.Level.WARNING, "Ignoring ${event.getClass().getSimpleName()} from $connection: only proxies report players");
         }
         return server.map(ConnectedServer::name);
+    }
+
+    private void loadPlayerData(PullUserData request) {
+        players.find(request.player()).flatMap(player -> servers.get(player.server())).ifPresent(connectedServer -> {
+            connectedServer.send(request);
+        });
+
+
     }
 
     @Override

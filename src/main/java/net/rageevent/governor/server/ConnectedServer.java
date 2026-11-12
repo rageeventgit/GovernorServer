@@ -3,6 +3,7 @@ package net.rageevent.governor.server;
 import net.rageevent.governor.api.Envelope;
 import net.rageevent.governor.api.EnvelopeConnection;
 import net.rageevent.governor.api.Transaction;
+import net.rageevent.governor.api.server.GameMetaData;
 import net.rageevent.governor.api.server.ServerProfile;
 import net.rageevent.governor.api.server.ServerRole;
 import net.rageevent.governor.api.server.ServerState;
@@ -20,6 +21,7 @@ public final class ConnectedServer implements EnvelopeConnection {
     private final ServerProfile profile;
     private volatile ServerState state = ServerState.OPEN;
     private volatile int maxPlayers;
+    private GameMetaData gameMetaData;
 
     ConnectedServer(String name, EnvelopeConnection connection, ServerProfile profile) {
         this.name = name;
@@ -72,6 +74,13 @@ public final class ConnectedServer implements EnvelopeConnection {
 
     public int maxPlayers() {
         return maxPlayers;
+    }
+
+    public GameMetaData gameData(){
+        return gameMetaData;
+    }
+    public void gameData(GameMetaData metaData){
+        this.gameMetaData = metaData;
     }
 
     public void update(ServerState newState, int newPlayerLimit) {
