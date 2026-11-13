@@ -49,9 +49,11 @@ public final class ConnectedServer implements EnvelopeConnection {
     public ServerType serverType() {
         return profile.serverType();
     }
-    public ServerModeType modeType(){
-        return profile.modeType();
+
+    public ServerModeType modeType() {
+        return gameMetaData.mode();
     }
+
     public ServerProfile profile() {
         return profile;
     }
@@ -76,10 +78,11 @@ public final class ConnectedServer implements EnvelopeConnection {
         return maxPlayers;
     }
 
-    public GameMetaData gameData(){
+    public GameMetaData gameData() {
         return gameMetaData;
     }
-    public void gameData(GameMetaData metaData){
+
+    public void gameData(GameMetaData metaData) {
         this.gameMetaData = metaData;
     }
 

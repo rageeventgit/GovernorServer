@@ -42,7 +42,7 @@ public class ServerConnectionManager {
     }
 
     public List<ConnectedServer> inMode(ServerModeType group) {
-        return servers.values().stream().filter(server -> server.isGameServer() && server.serverType() == group.type() && server.modeType() == group).toList();
+        return servers.values().stream().filter(server -> server.isGameServer() && server.gameData() != null && server.gameData().mode() == group).toList();
     }
 
     public Set<String> names() {

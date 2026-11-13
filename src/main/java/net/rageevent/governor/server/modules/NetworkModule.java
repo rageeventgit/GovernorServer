@@ -42,9 +42,9 @@ public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
                 .onAsyncTransaction(SendToServerRequest.class, (_, request) -> players.transfer(request.player(), request.server()))
                 .onAsyncTransaction(SendToGroupRequest.class, (_, request) -> players.sendToGroup(request.player(), request.group()))
                 .onTransaction(FindPlayerRequest.class, (_, request) -> find(request.name()))
-                .onAsyncTransaction(PullUserData.class, (connection, pullUserData) -> players.find(pullUserData.player())
+                .onAsyncTransaction(PullUserData.class, (_, pullUserData) -> players.find(pullUserData.player())
                         .flatMap(player -> servers.get(player.proxy()))
-                        .map(server -> server.request(pullUserData)).orElseGet(() -> CompletableFuture.supplyAsync(() -> new UserDataResponse("Failed request"))));
+                        .map(server -> server.request(pullUserData)).orElseGet(() -> CompletableFuture.supplyAsync(() -> new UserDataResponse("Failed request"))))
         ;
     }
 
