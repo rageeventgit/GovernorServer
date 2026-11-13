@@ -8,6 +8,7 @@ import net.rageevent.governor.api.EnvelopeConnection;
 import net.rageevent.governor.api.protocol.ConnectionListener;
 import net.rageevent.governor.api.shipments.network.player.*;
 import net.rageevent.governor.api.shipments.network.player.data.PullUserData;
+import net.rageevent.governor.api.shipments.network.player.data.UserDataResponse;
 import net.rageevent.governor.api.shipments.network.server.*;
 import net.rageevent.governor.server.ConnectedServer;
 import net.rageevent.governor.server.ServerConnectionManager;
@@ -16,6 +17,7 @@ import net.rageevent.governor.server.players.PlayerTracker;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
@@ -40,6 +42,9 @@ public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
                 .onAsyncTransaction(SendToServerRequest.class, (_, request) -> players.transfer(request.player(), request.server()))
                 .onAsyncTransaction(SendToGroupRequest.class, (_, request) -> players.sendToGroup(request.player(), request.group()))
                 .onTransaction(FindPlayerRequest.class, (_, request) -> find(request.name()))
+                .onAsyncTransaction(PullUserData.class, (connection, pullUserData) -> players.find(pullUserData.player())
+                        .flatMap(player -> servers.get(player.proxy()))
+                        .map(server -> server.request(pullUserData)).orElseGet(() -> CompletableFuture.supplyAsync(() -> new UserDataResponse("Failed request"))));
         ;
     }
 
@@ -60,14 +65,6 @@ public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
             LOG.log(System.Logger.Level.WARNING, "Ignoring ${event.getClass().getSimpleName()} from $connection: only proxies report players");
         }
         return server.map(ConnectedServer::name);
-    }
-
-    private void loadPlayerData(PullUserData request) {
-        players.find(request.player()).flatMap(player -> servers.get(player.server())).ifPresent(connectedServer -> {
-            connectedServer.send(request);
-        });
-
-
     }
 
     @Override
