@@ -1,6 +1,7 @@
 package net.rageevent.governor.server;
 
 import net.rageevent.governor.server.modules.NetworkModule;
+import net.rageevent.governor.server.modules.PoolModule;
 import net.rageevent.governor.server.modules.QueueModule;
 import net.rageevent.governor.server.modules.SystemModule;
 import net.rageevent.governor.server.players.PlayerTracker;
@@ -28,8 +29,11 @@ public class Main {
         }
 
         NetworkServer hub = new NetworkServer(port);
-        hub.install(new SystemModule())
-                .install(new QueueModule(hub))
+        // Fern pools when FERN_URL and FERN_API_KEY are set: queues claim servers from them
+        PoolModule pools = PoolModule.fromEnvironment(hub).orElse(null);
+        hub.install(new SystemModule());
+        if (pools != null) hub.install(pools);
+        hub.install(new QueueModule(hub, pools))
                 .start();
 
         Thread shutdownCommand = new Thread(() -> {

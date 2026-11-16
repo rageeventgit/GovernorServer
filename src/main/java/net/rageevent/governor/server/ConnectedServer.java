@@ -21,13 +21,16 @@ public final class ConnectedServer implements EnvelopeConnection {
     private final ServerProfile profile;
     private volatile ServerState state = ServerState.OPEN;
     private volatile int maxPlayers;
-    private GameMetaData gameMetaData;
+    private volatile GameMetaData gameMetaData;
+    /** Not announced to proxies and never joinable, e.g. a ready Fern pool server nobody claimed. */
+    private volatile boolean hidden;
 
-    ConnectedServer(String name, EnvelopeConnection connection, ServerProfile profile) {
+    ConnectedServer(String name, EnvelopeConnection connection, ServerProfile profile, boolean hidden) {
         this.name = name;
         this.connection = connection;
         this.profile = profile;
         this.maxPlayers = profile.maxPlayers();
+        this.hidden = hidden;
     }
 
 
@@ -50,8 +53,19 @@ public final class ConnectedServer implements EnvelopeConnection {
         return profile.serverType();
     }
 
+    /** The mode it runs, or null when it has sent no game profile (lobbies). */
     public ServerModeType modeType() {
-        return gameMetaData.mode();
+        GameMetaData data = gameMetaData;
+        return data == null ? null : data.mode();
+    }
+
+    /** Hidden servers are unknown to the proxies: nobody can be sent there. See {@link ServerConnectionManager#reveal}. */
+    public boolean hidden() {
+        return hidden;
+    }
+
+    void hidden(boolean hidden) {
+        this.hidden = hidden;
     }
 
     public ServerProfile profile() {

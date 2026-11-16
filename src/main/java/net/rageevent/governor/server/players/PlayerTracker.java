@@ -104,13 +104,13 @@ public final class PlayerTracker {
      */
     public List<ConnectedServer> joinable(ServerType group) {
         return servers.inGroup(group).stream()
-                .filter(server -> server.state().joinable() && freeSlots(server) > 0)
+                .filter(server -> !server.hidden() && server.state().joinable() && freeSlots(server) > 0)
                 .toList();
     }
 
     public List<ConnectedServer> joinable(ServerModeType group) {
         return servers.inMode(group).stream()
-                .filter(server -> server.state().joinable() && freeSlots(server) > 0)
+                .filter(server -> !server.hidden() && server.state().joinable() && freeSlots(server) > 0)
                 .toList();
     }
 
@@ -127,7 +127,8 @@ public final class PlayerTracker {
         if (player == null) {
             return done(TransferResult.Status.NOT_ONLINE, server, "Player is not online");
         }
-        Optional<ConnectedServer> target = servers.get(server).filter(ConnectedServer::isGameServer);
+        // hidden servers (unclaimed pool servers) are not open to anyone
+        Optional<ConnectedServer> target = servers.get(server).filter(s -> s.isGameServer() && !s.hidden());
         if (target.isEmpty()) {
             return done(TransferResult.Status.UNKNOWN_SERVER, server, "No server named $server is connected");
         }

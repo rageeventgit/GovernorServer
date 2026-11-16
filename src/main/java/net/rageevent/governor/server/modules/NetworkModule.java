@@ -70,24 +70,23 @@ public class NetworkModule implements EnvelopeCarrier, ConnectionListener {
     @Override
     public void ready(EnvelopeConnection connection) {
         servers.of(connection).ifPresent(server -> {
-            if (server.isGameServer())
-                servers.broadcastToProxies(added(server));
-            else
-                servers.gameServers().forEach(backend -> server.send(added(backend)));
+            if (server.isGameServer()) {
+                // hidden servers (unclaimed pool servers) reach the proxies once they are revealed
+                if (!server.hidden()) servers.broadcastToProxies(ServerConnectionManager.registration(server));
+            } else {
+                servers.visibleGameServers().forEach(backend -> server.send(ServerConnectionManager.registration(backend)));
+            }
         });
     }
 
     @Override
     public void disconnect(EnvelopeConnection connection) {
         servers.of(connection).ifPresent(server -> {
-            if (server.isGameServer())
-                servers.broadcastToProxies(new RemoveGameServer(server.name()));
-            else
+            if (server.isGameServer()) {
+                if (!server.hidden()) servers.broadcastToProxies(new RemoveGameServer(server.name()));
+            } else {
                 players.proxyLost(server.name());
+            }
         });
-    }
-
-    private static RegisterGameServer added(ConnectedServer server) {
-        return new RegisterGameServer(server.name(), server.serverType(), server.profile().host(), server.profile().port());
     }
 }

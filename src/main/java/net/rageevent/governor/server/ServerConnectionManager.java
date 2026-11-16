@@ -4,6 +4,9 @@ import net.rageevent.governor.api.Envelope;
 import net.rageevent.governor.api.EnvelopeConnection;
 import net.rageevent.governor.api.Transaction;
 import net.rageevent.governor.api.server.ServerProfile;
+import net.rageevent.governor.api.server.ServerRole;
+import net.rageevent.governor.api.shipments.network.server.RegisterGameServer;
+import net.rageevent.governor.api.shipments.network.server.RemoveGameServer;
 import net.rageevent.myriad.api.server.ServerModeType;
 import net.rageevent.myriad.api.server.ServerType;
 
@@ -16,6 +19,39 @@ import java.util.function.Predicate;
 public class ServerConnectionManager {
 
     private final ConcurrentMap<String, ConnectedServer> servers = new ConcurrentHashMap<>();
+    /** When set, game servers connect hidden until something {@link #reveal reveals} them (Fern pools). */
+    private volatile boolean holdNewServers;
+
+    public void holdNewServers(boolean hold) {
+        this.holdNewServers = hold;
+    }
+
+    /** Announces a hidden game server to every proxy: from now on players can be sent there. */
+    public void reveal(ConnectedServer server) {
+        synchronized (server) {
+            if (!server.hidden()) return;
+            server.hidden(false);
+        }
+        if (server.active()) broadcastToProxies(registration(server));
+    }
+
+    /** Takes a game server off every proxy: nobody can be sent there until it is revealed again. */
+    public void hide(ConnectedServer server) {
+        synchronized (server) {
+            if (server.hidden()) return;
+            server.hidden(true);
+        }
+        broadcastToProxies(new RemoveGameServer(server.name()));
+    }
+
+    /** Game servers the proxies know about. */
+    public List<ConnectedServer> visibleGameServers() {
+        return servers.values().stream().filter(server -> server.isGameServer() && !server.hidden()).toList();
+    }
+
+    public static RegisterGameServer registration(ConnectedServer server) {
+        return new RegisterGameServer(server.name(), server.serverType(), server.profile().host(), server.profile().port());
+    }
 
     public Optional<ConnectedServer> get(String name) {
         return name == null ? Optional.empty() : Optional.ofNullable(servers.get(name));
@@ -84,7 +120,7 @@ public class ServerConnectionManager {
                 taken[0] = true;
                 return existing;
             }
-            return new ConnectedServer(name, connection, profile);
+            return new ConnectedServer(name, connection, profile, holdNewServers && profile.role() == ServerRole.GAME_SERVER);
         });
         return taken[0] ? "A server named '$name' is already connected" : null;
     }

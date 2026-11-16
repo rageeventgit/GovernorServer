@@ -77,6 +77,10 @@
             <id>fern-releases</id>
             <url>https://fern.rageevent.net/maven/releases</url>
         </repository>
+        <repository>
+            <id>fern-api</id>
+            <url>https://fern.rageevent.net/maven/fern</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -90,7 +94,11 @@
             <artifactId>jackson-databind</artifactId>
             <version>2.22.3</version>
         </dependency>
-
+        <dependency>
+            <groupId>net.rageevent</groupId>
+            <artifactId>fern-api</artifactId>
+            <version>0.2.1</version>
+        </dependency>
         <dependency>
             <groupId>net.rageevent</groupId>
             <artifactId>myriad-common</artifactId>

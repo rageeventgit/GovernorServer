@@ -26,6 +26,8 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
 
     private final ServerConnectionManager servers;
     private final PlayerTracker players;
+    /** Fern pools: servers claimed when a queue runs out of room. Null without Fern. */
+    private final PoolModule pools;
     private final Map<ServerModeType, Deque<UUID>> queues = new HashMap<>();
     private final Map<UUID, ServerModeType> queueOf = new HashMap<>();
     private final Map<UUID, Integer> lastAnnounced = new HashMap<>();
@@ -33,15 +35,35 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
     private final ScheduledExecutorService ticker;
 
     public QueueModule(NetworkServer hub) {
-        this(hub, Duration.ofSeconds(1));
+        this(hub, null, Duration.ofSeconds(1));
     }
 
     public QueueModule(NetworkServer hub, Duration tickInterval) {
+        this(hub, null, tickInterval);
+    }
+
+    /** @param pools Fern pools to claim servers from when no open server has room; null for none */
+    public QueueModule(NetworkServer hub, PoolModule pools) {
+        this(hub, pools, Duration.ofSeconds(1));
+    }
+
+    public QueueModule(NetworkServer hub, PoolModule pools, Duration tickInterval) {
         this.servers = hub.connections();
         this.players = hub.players();
+        this.pools = pools;
         this.ticker = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform().name("Overseer-Queues").daemon().factory());
         ticker.scheduleWithFixedDelay(this::tick, tickInterval.toMillis(), tickInterval.toMillis(), TimeUnit.MILLISECONDS);
         players.addListener(this);
+        if (pools != null) pools.onChange(this::tickSoon);
+    }
+
+    /** A pool server opened (or anything else that may make room): match now rather than on the next tick. */
+    private void tickSoon() {
+        try {
+            ticker.execute(this::tick);
+        } catch (java.util.concurrent.RejectedExecutionException ignored) {
+            // shutting down
+        }
     }
 
     @Override
@@ -63,7 +85,9 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
         UUID player = request.player();
         ServerModeType queue = request.queue();
         if (!players.isOnline(player)) return new QueueResult(QueueResult.Status.NOT_ONLINE, queue, 0, 0);
-        if (servers.inMode(queue).isEmpty()) return new QueueResult(QueueResult.Status.UNKNOWN_QUEUE, queue, 0, 0);
+        // a mode with a pool is a real queue even while none of its servers is up
+        if (servers.inMode(queue).isEmpty() && (pools == null || !pools.serves(queue)))
+            return new QueueResult(QueueResult.Status.UNKNOWN_QUEUE, queue, 0, 0);
 
         QueueResult result;
         synchronized (this) {
@@ -110,7 +134,9 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
         long now = System.nanoTime();
         cooldownUntil.values().removeIf(until -> now - until > 0);
         List<ConnectedServer> open = new ArrayList<>(players.joinable(queue));
-        open.removeIf(server -> cooldownUntil.containsKey(server.name()));
+        open.removeIf(server -> cooldownUntil.containsKey(server.name())
+                // pool servers only take this queue once Governor claimed them for it
+                || (pools != null && !pools.usableFor(server, queue)));
 
         open.sort(Comparator.comparingInt(players::freeSlots));
         for (ConnectedServer server : open) {
@@ -123,6 +149,7 @@ public final class QueueModule implements EnvelopeCarrier, PlayerTracker.Listene
                 dispatches.add(() -> send(player, queue, server.name()));
             }
         }
+        if (!line.isEmpty() && pools != null) pools.needServer(queue);
     }
 
     private void send(UUID player, ServerModeType queue, String server) {
